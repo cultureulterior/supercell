@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Supercell Dithering in Webgl</title>
+<script type='text/javascript' src='three.min.js'></script>
+<script type='text/javascript'>//<![CDATA[
+window.onload=function(){
+var scene = new THREE.Scene();
+var camera = new THREE.OrthographicCamera(0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth);
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+var uniforms = {
+    size: { type: "v2", value: new THREE.Vector2( window.innerWidth , window.innerWidth ) },
+    dither: {type: "fv1", value: [4,18,0,15,9,14,8,21,3,20,2,17,11,13,7,23,5,19,1,16,10,12,6,22] }
+}
+var attributes = {}
+testmaterial = new THREE.ShaderMaterial({
+  uniforms: uniforms,
+  attributes: attributes,
+  vertexShader:   document.getElementById('vertexShader').textContent,
+  fragmentShader: document.getElementById('fragmentShader').textContent
+});
+geo = new THREE.PlaneGeometry(window.innerWidth,window.innerHeight);
+var plane = new THREE.Mesh( geo, testmaterial );
+
+plane.position.set(window.innerWidth/2,window.innerHeight/2,0);
+scene.add( plane );
+camera.position.z = 100;
+
+function render() {
+    requestAnimationFrame(render);
+    renderer.render(scene, camera);
+}
+render();
+}//]]>
+</script>
+</head>
+<body>
+<script type="x-shader/x-vertex" id="vertexShader">
+    varying vec2 vUv;
+    void main() {
+      gl_Position = projectionMatrix *
+                modelViewMatrix *
+                vec4(position, 1.0);
+     vUv = position.xy;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragmentShader">
+    precision highp float;
+    varying vec2 vUv;
+    uniform float dither[24];
+    uniform vec2 size;
+    void main() {
+     float x=floor(vUv.x);
+     float y=floor(vUv.y);
+     float supercell=mod(x+floor(y*5.0), 24.0);
+     float color=0.0;
+     for (int i = 0 ; i < 24 ; i++ )
+     { if (int(supercell) == i) { color=(dither[i]+1.0)/25.0; }}
+       gl_FragColor=vec4(vec3(step(mod((x+size.x/2.0),size.x)/size.x,color)),1.0);
+    }
+</script>
+</body>
+</html>
