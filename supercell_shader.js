@@ -1,6 +1,6 @@
 THREE.SupercellShader = {
 	uniforms: {
-		"tSize":    { type: "v2", value: new THREE.Vector2( 256, 256 ) },
+		"tSize":    { type: "v2", value: new THREE.Vector2( 512, 512 ) },
 		"tDiffuse": { type: "t", value: null },
     "dither":   {type: "fv1", value: [4,18,0,15,9,14,8,21,3,20,2,17,11,13,7,23,5,19,1,16,10,12,6,22] }
 	},
@@ -14,20 +14,21 @@ THREE.SupercellShader = {
 	].join("\n"),
 
 	fragmentShader: [
-		"uniform vec2 tSize;",
-		"uniform sampler2D tDiffuse;",
-		"varying vec2 vUv;",
+	    "uniform vec2 tSize;",
+	    "uniform sampler2D tDiffuse;",
+	    "varying vec2 vUv;",
+            "uniform float dither[24];",
   "void main() {",
-     "float x=floor(vUv.x);",
-     "float y=floor(vUv.y);",
+     "float x=floor(vUv.x*tSize.x);",
+     "float y=floor(vUv.y*tSize.y);",
      "float supercell=mod(x+floor(y*5.0), 24.0);",
      "float level=0.0;",
      "for (int i = 0 ; i < 24 ; i++ )",
      "{ if (int(supercell) == i) { level=(dither[i]+1.0)/25.0; }}",
-     "vec2 tex = vUv * tSize - tSize / 2;",
+     "vec2 tex = vUv * tSize - tSize / 2.0;",
 		 "vec4 color = texture2D( tDiffuse, vUv );",
      "float average = ( color.r + color.g + color.b ) / 3.0;",
-     "gl_FragColor=vec4(vec3(step(average,level)),1.0);",
+     "gl_FragColor=vec4(vec3(step(1.0-average,level)),1.0);",
 		"}"
 	].join("\n")
 };
